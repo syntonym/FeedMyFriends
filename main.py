@@ -1,7 +1,9 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, abort
 import scraper
 import json
 import time
+import database
+from database import User, Feed, Keyword, session
 
 app = Flask(__name__)
 
@@ -25,6 +27,29 @@ def new_post_controller(new_url):
 
 
 #View
+
+@app.route("/init_db", methods=["POST"])
+def init_db():
+    database.init_db()
+    abort(404)
+
+@app.route("/feeds_get", methods=["GET"])
+def get_feeds():
+    feeds = session.query(Feed).limit(30)
+    sdeef = [feed.rep() for feed in feeds]
+    return(json.dumps(sdeef))
+
+@app.route("/feeds", methods=["POST"])
+def feeds():
+    session = database.session
+    session.add(Feed(request.form["link"]))
+    session.commit()
+    abort(405)
+
+
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    database.session.remove()
 
 @app.route("/scraper_api", methods=['GET', 'POST'])
 def scraper_api():
